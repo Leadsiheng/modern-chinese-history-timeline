@@ -1377,7 +1377,7 @@ const hint = document.getElementById('hint');
 const zoomLabel = document.getElementById('zoomLabel');
 
 let currentFilter = 'all';
-let zoomLevel = 1.0;
+let zoomLevel = 1.5;
 let anchorBaseX = 0;
 const ZOOM_MIN = 0.50;
 const ZOOM_MAX = 5.0;
@@ -1589,7 +1589,7 @@ function renderTimeline() {
 
   baseTrackWidth = xPos(YEAR_END) + 300;
   anchorBaseX = baseTrackWidth / 2;
-  zoomLevel = 1.0;
+  zoomLevel = 1.5;
 
   // SVG 连接线
   let svgLines = '';
@@ -1674,7 +1674,7 @@ function renderTimeline() {
   });
 
   updateTickVisibility();
-  zoomLabel.textContent = '100%';
+  zoomLabel.textContent = '150%';
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
