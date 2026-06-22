@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国近现代史纲要 · 编年卷轴</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --paper: #f7f2e6;
+  --paper-dark: #e8dfc8;
+  --ink: #2c2416;
+  --ink-light: #5c4a2a;
+  --vermilion: #c41e3a;
+  --vermilion-light: #f8d7da;
+  --vermilion-glow: rgba(196,30,58,0.3);
+  --indigo: #1a5276;
+  --indigo-light: #d4e6f1;
+  --indigo-glow: rgba(26,82,118,0.3);
+  --wood: #5c3d2e;
+  --wood-dark: #3e2213;
+  --gold: #b8860b;
+  --scroll-bg: linear-gradient(180deg, #f7f2e6 0%, #efe5cc 50%, #f7f2e6 100%);
+}
+
+html, body {
+  background: #3e2213;
+  font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+.scroll-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 顶底卷轴杆 */
+.scroll-rod {
+  position: fixed;
+  left: 0; right: 0;
+  height: 22px;
+  z-index: 100;
+  background: linear-gradient(180deg, #4a2810 0%, #6b3a1f 30%, #8b4a2f 50%, #6b3a1f 70%, #4a2810 100%);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,255,255,0.1);
+}
+.scroll-rod.top { top:0; border-bottom: 3px solid #2a1505; }
+.scroll-rod.bottom { bottom:0; border-top: 3px solid #2a1505; }
+
+.scroll-rod::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px; height: 8px;
+  background: linear-gradient(180deg, #c9a84c, #8b6914, #c9a84c);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(201,168,76,0.4);
+}
+
+.paper-surface {
+  position: fixed;
+  top: 22px; bottom: 22px; left: 0; right: 0;
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(139,105,20,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(139,105,20,0.04) 0%, transparent 50%),
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(139,105,20,0.02) 3px, rgba(139,105,20,0.02) 4px);
+  overflow: hidden;
+}
+
+/* 顶部导航条 */
+.top-nav {
+  position: fixed;
+  top: 22px; left: 0; right: 0;
+  height: 56px;
+  z-index: 90;
+  background: linear-gradient(180deg, rgba(247,242,230,0.98) 0%, rgba(247,242,230,0.9) 80%, rgba(247,242,230,0) 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  gap: 16px;
+}
+
+.top-nav .title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ink);
+  letter-spacing: 4px;
+  white-space: nowrap;
+  margin-right: 20px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.chapter-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chapter-tabs::-webkit-scrollbar { display:none; }
+
+.chapter-tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 600;
+  border: 1.5px solid rgba(92,74,42,0.25);
+  background: rgba(247,242,230,0.6);
+  color: var(--ink-light);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+.chapter-tab:hover {
+  background: rgba(196,30,58,0.08);
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+}
+.chapter-tab.active {
+  background: var(--vermilion);
+  color: #fff;
+  border-color: var(--vermilion);
+  box-shadow: 0 2px 8px var(--vermilion-glow);
+}
+
+.filter-section {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.filter-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 600;
+  border: 1.5px solid rgba(92,74,42,0.3);
+  background: rgba(247,242,230,0.8);
+  color: var(--ink-light);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.filter-btn:hover { border-color: var(--ink-light); }
+.filter-btn.active[data-filter="all"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.filter-btn.active[data-filter="memory"] {
+  background: var(--vermilion);
+  color: #fff;
+  border-color: var(--vermilion);
+  box-shadow: 0 2px 8px var(--vermilion-glow);
+}
+.filter-btn.active[data-filter="understand"] {
+  background: var(--indigo);
+  color: #fff;
+  border-color: var(--indigo);
+  box-shadow: 0 2px 8px var(--indigo-glow);
+}
+
+/* 主滚动区 */
+.timeline-viewport {
+  position: absolute;
+  top: 78px; bottom: 0; left: 0; right: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  cursor: grab;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(92,58,30,0.3) transparent;
+}
+.timeline-viewport:active { cursor: grabbing; }
+.timeline-viewport::-webkit-scrollbar {
+  height: 8px;
+}
+.timeline-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.timeline-viewport::-webkit-scrollbar-thumb {
+  background: rgba(92,58,30,0.3);
+  border-radius: 4px;
+}
+
+.timeline-track {
+  position: relative;
+  height: 100%;
+  min-width: 100%;
+}
+
+/* 时间轴刻度 */
+.tick-mark {
+  position: absolute;
+  top: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+  transition: left 0.3s ease-out;
+}
+.tick-mark .tick-line {
+  width: 1px;
+  background: rgba(44,36,22,0.3);
+  margin: 0 auto;
+}
+.tick-mark.major .tick-line { height: 24px; background: rgba(44,36,22,0.45); width: 2px; }
+.tick-mark.minor .tick-line { height: 12px; }
+.tick-mark .tick-label {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(44,36,22,0.55);
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* 缩放控制 */
+.zoom-controls {
+  position: fixed;
+  right: 24px;
+  bottom: 42px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(247,242,230,0.92);
+  padding: 6px;
+  border-radius: 24px;
+  border: 1px solid rgba(92,74,42,0.2);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.zoom-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(92,74,42,0.25);
+  background: var(--paper);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 28px;
+  text-align: center;
+  color: var(--ink-light);
+  transition: all 0.2s ease;
+  font-family: 'Noto Serif SC', serif;
+}
+.zoom-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.zoom-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-light);
+  letter-spacing: 1px;
+  padding: 2px 0;
+  min-width: 36px;
+  text-align: center;
+}
+.zoom-reset {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(92,74,42,0.2);
+  background: rgba(247,242,230,0.8);
+  cursor: pointer;
+  color: var(--ink-light);
+  font-family: 'Noto Serif SC', serif;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+}
+.zoom-reset:hover { background: var(--ink); color: var(--paper); }
+
+/* 时间线 */
+.timeline-line {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  top: 50%;
+  height: 4px;
+  background: linear-gradient(90deg,
+    rgba(44,36,22,0.05) 0%,
+    rgba(44,36,22,0.55) 3%,
+    rgba(44,36,22,0.55) 97%,
+    rgba(44,36,22,0.05) 100%
+  );
+  transform: translateY(-50%);
+  box-shadow: 0 0 8px rgba(44,36,22,0.1);
+  z-index: 2;
+}
+
+/* 章节标记 */
+.chapter-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.chapter-marker .ch-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 4px var(--paper), 0 0 12px rgba(184,134,11,0.5);
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.chapter-marker .ch-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--wood-dark);
+  letter-spacing: 2px;
+  background: var(--paper);
+  padding: 4px 10px;
+  border: 1px solid rgba(92,58,30,0.2);
+  border-radius: 3px;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.08);
+  z-index: 1;
+}
+.chapter-marker .ch-label.left { right: 28px; }
+.chapter-marker .ch-label.right { left: 28px; }
+
+/* 连接线 SVG */
+.connector-svg {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: visible;
+}
+.connector-svg line {
+  stroke-dasharray: 4 3;
+  transition: stroke-opacity 0.3s ease;
+}
+.connector-svg circle.endpoint-memory {
+  fill: var(--vermilion);
+  stroke: #fff;
+  stroke-width: 2;
+}
+.connector-svg circle.endpoint-understand {
+  fill: var(--indigo);
+  stroke: #fff;
+  stroke-width: 2;
+}
+.connector-svg circle.timeline-dot {
+  transition: r 0.3s ease;
+}
+
+/* 事件节点 */
+.event-node {
+  position: absolute;
+  cursor: pointer;
+  z-index: 5;
+  --card-scale: 1;
+  opacity: 0;
+}
+
+.event-node.visible {
+  animation: nodeAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes nodeAppear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.event-node:hover { z-index: 20; }
+.event-node.above:hover .node-card {
+  transform: translate(-50%, -100%) scale(calc(var(--card-scale) * 1.15));
+}
+.event-node.below:hover .node-card {
+  transform: translate(-50%, 0%) scale(calc(var(--card-scale) * 1.15));
+}
+
+.event-node .node-card {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-node.memory .node-card {
+  background: linear-gradient(135deg, #fff 0%, var(--vermilion-light) 100%);
+  border: 2px solid var(--vermilion);
+  color: var(--vermilion);
+  box-shadow: 2px 3px 8px rgba(196,30,58,0.15);
+}
+.event-node.memory:hover .node-card {
+  background: var(--vermilion);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--vermilion-glow), 0 0 0 6px rgba(196,30,58,0.1);
+}
+
+.event-node.understand .node-card {
+  background: linear-gradient(135deg, #fff 0%, var(--indigo-light) 100%);
+  border: 2px solid var(--indigo);
+  color: var(--indigo);
+  box-shadow: 2px 3px 8px rgba(26,82,118,0.15);
+}
+.event-node.understand:hover .node-card {
+  background: var(--indigo);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--indigo-glow), 0 0 0 6px rgba(26,82,118,0.1);
+}
+
+.event-node .node-year {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.7;
+  letter-spacing: 0;
+}
+
+.event-node .badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.event-node.memory .badge { background: rgba(196,30,58,0.15); }
+.event-node.understand .badge { background: rgba(26,82,118,0.15); }
+
+/* 详情弹窗遮罩 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(30,15,5,0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.detail-card {
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgba(139,105,20,0.03) 0%, transparent 50%);
+  max-width: 720px;
+  width: 90vw;
+  max-height: 80vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 4px var(--wood), 0 0 0 8px rgba(92,61,46,0.3);
+  overflow-y: auto;
+  transform: scale(0.85);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.overlay.open .detail-card {
+  transform: scale(1);
+}
+
+.detail-card::-webkit-scrollbar { width:6px; }
+.detail-card::-webkit-scrollbar-track { background: transparent; }
+.detail-card::-webkit-scrollbar-thumb { background: rgba(92,74,42,0.25); border-radius: 3px; }
+
+.detail-header {
+  padding: 28px 32px 16px;
+  border-bottom: 2px solid rgba(92,74,42,0.15);
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 2;
+}
+
+.detail-header .event-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+
+.detail-header .event-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.detail-header .meta-tag {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.meta-tag.memory-tag {
+  background: var(--vermilion-light);
+  color: var(--vermilion);
+  border: 1px solid var(--vermilion);
+}
+.meta-tag.understand-tag {
+  background: var(--indigo-light);
+  color: var(--indigo);
+  border: 1px solid var(--indigo);
+}
+.meta-tag.chapter-tag {
+  background: rgba(92,74,42,0.1);
+  color: var(--ink-light);
+  border: 1px solid rgba(92,74,42,0.2);
+}
+
+.detail-body {
+  padding: 24px 32px 32px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h3 {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.detail-section h3::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+}
+.detail-section.textbook h3::before { background: var(--gold); }
+.detail-section.exam h3::before { background: var(--vermilion); }
+
+.detail-section .textbook-quote {
+  padding: 16px 20px;
+  background: rgba(184,134,11,0.06);
+  border-left: 3px solid var(--gold);
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--ink);
+  border-radius: 0 6px 6px 0;
+  letter-spacing: 0.5px;
+}
+
+.detail-section .exam-item {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: rgba(196,30,58,0.04);
+  border: 1px solid rgba(196,30,58,0.1);
+  font-size: 14px;
+  line-height: 1.7;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.exam-item .exam-paper {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--vermilion);
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.exam-item .exam-type {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(196,30,58,0.12);
+  color: var(--vermilion);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.exam-item .exam-question {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.detail-close {
+  position: sticky;
+  top: 12px;
+  float: right;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(92,74,42,0.3);
+  background: var(--paper);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 36px;
+  text-align: center;
+  color: var(--ink-light);
+  transition: all 0.25s ease;
+  z-index: 10;
+}
+.detail-close:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  transform: rotate(90deg);
+}
+
+/* 提示文字 */
+.hint-text {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  font-size: 13px;
+  color: var(--ink-light);
+  letter-spacing: 2px;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 1s ease;
+  background: rgba(247,242,230,0.8);
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(92,74,42,0.15);
+}
+
+/* 图例 */
+.legend {
+  position: fixed;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  gap: 20px;
+  background: rgba(247,242,230,0.9);
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(92,74,42,0.15);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-light);
+  letter-spacing: 1px;
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.legend-dot.legend-memory { background: var(--vermilion); }
+.legend-dot.legend-understand { background: var(--indigo); }
+
+/* 年份刻度 */
+.year-tick {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  color: rgba(92,74,42,0.35);
+  pointer-events: none;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .top-nav { padding: 0 16px; gap: 8px; }
+  .top-nav .title { font-size: 16px; letter-spacing: 2px; }
+  .chapter-tab { padding: 4px 10px; font-size: 11px; }
+  .filter-btn { padding: 5px 12px; font-size: 11px; }
+  .detail-card { width: 95vw; max-height: 85vh; }
+  .detail-header { padding: 20px 20px 12px; }
+  .detail-header .event-title { font-size: 20px; }
+  .detail-body { padding: 16px 20px 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="scroll-stage">
+  <div class="scroll-rod top"></div>
+  <div class="paper-surface">
+    <div class="top-nav">
+      <span class="title">中国近现代史纲要 · 编年卷轴</span>
+      <div class="chapter-tabs" id="chapterTabs"></div>
+      <div class="filter-section">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">全部事件</button>
+        <button class="filter-btn" data-filter="memory" onclick="setFilter('memory')">识记性重点</button>
+        <button class="filter-btn" data-filter="understand" onclick="setFilter('understand')">理解性重点</button>
+      </div>
+    </div>
+
+    <div class="timeline-viewport" id="viewport">
+      <div class="timeline-track" id="track">
+      </div>
+    </div>
+    </div>
+
+    <div class="hint-text" id="hint">← 拖拽滚动浏览 · 点击事件查看详情 →</div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot legend-memory"></div> 识记性重点</div>
+      <div class="legend-item"><div class="legend-dot legend-understand"></div> 理解性重点</div>
+    </div>
+
+    <div class="zoom-controls" id="zoomControls">
+      <button class="zoom-btn" onclick="adjustZoom(0.15)" title="放大">+</button>
+      <span class="zoom-label" id="zoomLabel">100%</span>
+      <button class="zoom-btn" onclick="adjustZoom(-0.15)" title="缩小">−</button>
+      <button class="zoom-reset" onclick="resetZoom()">复位</button>
+    </div>
+  </div>
+  <div class="scroll-rod bottom"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDetail(event)">
+  <div class="detail-card" id="detailCard" onclick="event.stopPropagation()">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div class="detail-header" id="detailHeader"></div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+// ==================== 事件数据 ====================
+const EVENTS = [];
+
+let _eventIdCounter = 0;
+function addEvent(cfg) {
+  if (!cfg.id) cfg.id = 'evt_' + (++_eventIdCounter);
+  EVENTS.push(cfg);
+}
+
+// ============ 第一章 反对外国侵略的斗争 ============
+const CH1 = 1;
+
+addEvent({id:'ch1_start',title:'鸦片战争前夜',year:1839,chapter:CH1,category:'chapter',textbook:'',examRefs:[]});
+
+// 识记性
+addEvent({year:1842,title:'《南京条约》签订',chapter:CH1,category:'memory',
+  textbook:'中国近代史上第一个不平等条约。英国强迫清政府签订，开放广州、厦门、福州、宁波、上海五处为通商口岸，割让香港岛，赔款2100万银元。自此中国开始沦为半殖民地半封建社会。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'中国近代史上第一个不平等条约是？'},{paper:'第1套',type:'多选题',q:'《南京条约》开放哪些口岸？'}]});
+
+addEvent({year:1840,title:'第一次鸦片战争',chapter:CH1,category:'memory',
+  textbook:'中国近代史的起点。英国以虎门销烟为借口发动侵略战争，标志着中国由封建社会逐步变成半殖民地半封建社会。殉国将领有关天培（虎门炮台）、陈化成（吴淞炮台）、海龄（镇江）。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'第一次鸦片战争殉国将领包括？'},{paper:'第1套',type:'辨析题',q:'鸦片战争是由虎门销烟引起的（错误——根本原因是英国资本主义扩张）'}]});
+
+addEvent({year:1844,title:'《望厦条约》《黄埔条约》',chapter:CH1,category:'memory',
+  textbook:'美国、法国趁火打劫，分别强迫清政府签订中美《望厦条约》和中法《黄埔条约》，进一步扩大在华特权。',
+  examRefs:[{paper:'第1套',type:'多选题',q:'美法趁火打劫签订的条约是？'}]});
+
+addEvent({year:1858,title:'中俄《瑷珲条约》《北京条约》',chapter:CH1,category:'memory',
+  textbook:'沙俄通过《瑷珲条约》（1858）和《中俄北京条约》（1860）等不平等条约，共侵占中国领土150多万平方公里。',
+  examRefs:[{paper:'第1套',type:'多选题',q:'沙俄侵占中国东北领土的条约是？'}]});
+
+addEvent({year:1860,title:'英法联军火烧圆明园',chapter:CH1,category:'memory',
+  textbook:'1860年第二次鸦片战争期间，英法联军攻入北京，抢劫并焚烧圆明园，给中国文化造成不可估量的损失。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'1860年烧毁圆明园的是？'}]});
+
+addEvent({year:1841,title:'三元里人民抗英斗争',chapter:CH1,category:'memory',
+  textbook:'1841年5月，广州三元里人民自发组织抗击英军侵略，是近代中国历史上第一次大规模的反侵略斗争。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'近代第一次大规模反侵略斗争是？'}]});
+
+addEvent({year:1895,title:'《马关条约》签订',chapter:CH1,category:'memory',
+  textbook:'甲午战争后日本强迫清政府签订。割让台湾全岛及澎湖列岛、辽东半岛，赔款2亿两白银，允许日本在华设厂。列强侵略由此进入以资本输出为主的新阶段。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'《马关条约》标志着列强侵略进入什么新阶段？'}]});
+
+addEvent({year:1895,title:'三国干涉还辽',chapter:CH1,category:'memory',
+  textbook:'《马关条约》后，俄国联合德国、法国干涉，迫使日本归还辽东半岛给中国。表明帝国主义国家之间既矛盾又勾结的关系。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'德法俄三国干涉还辽说明什么？'}]});
+
+addEvent({year:1901,title:'《辛丑条约》签订',chapter:CH1,category:'memory',
+  textbook:'八国联军侵华后签订。赔款4.5亿两白银，本息合计近10亿两，是赔款最多的不平等条约。列强获得在使馆区、北京至山海关沿线驻兵特权。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'列强获得驻兵特权的条约是？赔款最多的条约是？'}]});
+
+addEvent({year:1843,title:'魏源编成《海国图志》',chapter:CH1,category:'memory',
+  textbook:'魏源编成《海国图志》，提出"师夷长技以制夷"的思想，引导中国人了解外部世界，开创了近代向西方学习的新思潮。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'《海国图志》的直接作用是？'}]});
+
+addEvent({year:1839,title:'林则徐虎门销烟',chapter:CH1,category:'memory',
+  textbook:'林则徐受命为钦差大臣，在广东虎门海滩销毁鸦片。"近代中国睁眼看世界的第一人"。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'鸦片战争时期新思潮的核心是？'}]});
+
+addEvent({year:1898,title:'严复翻译《天演论》',chapter:CH1,category:'memory',
+  textbook:'严复翻译英国赫胥黎《天演论》，宣传"物竞天择""适者生存"的观点，喊出"救亡"口号。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'严复翻译的著作是？'}]});
+
+addEvent({year:1885,title:'冯子才镇南关大捷',chapter:CH1,category:'memory',
+  textbook:'中法战争中，老将冯子才率军在镇南关（今友谊关）大败法军。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'镇南关大捷的指挥者是？'}]});
+
+addEvent({year:1876,title:'左宗棠收复新疆',chapter:CH1,category:'memory',
+  textbook:'左宗棠力排众议，主张海防塞防并重，坚决要求收复新疆。收复除伊犁外的全部新疆领土。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'提出"海防塞防并重"收复新疆的是？'}]});
+
+addEvent({year:1894,title:'甲午海战',chapter:CH1,category:'memory',
+  textbook:'北洋舰队与日本舰队在黄海激战，北洋舰队损失战舰5艘，伤亡千余人；"致远"号管带邓世昌壮烈殉国，提督丁汝昌自杀殉国。',
+  examRefs:[{paper:'第1套',type:'单选题',q:'甲午海战中壮烈殉国的是？'}]});
+
+// 理解性
+addEvent({year:1840,title:'鸦片战争：中国近代史的起点',chapter:CH1,category:'understand',
+  textbook:'鸦片战争是中国近代史的起点。从此，中国由一个独立的封建社会逐步变成了半殖民地半封建社会。社会主要矛盾由地主阶级与农民阶级的矛盾，变为帝国主义和中华民族的矛盾、封建主义和人民大众的矛盾。由此产生了两大历史任务：争得民族独立和人民解放；实现国家富强和人民富裕。',
+  examRefs:[{paper:'第1套',type:'论述题',q:'为什么说鸦片战争是中国近代史的起点？'},{paper:'第1套',type:'辨析题',q:'鸦片战争是由虎门销烟引起的（错误）'}]});
+
+addEvent({year:1900,title:'近代反侵略战争失败原因',chapter:CH1,category:'understand',
+  textbook:'历次反侵略战争失败的原因：一是社会制度的腐败（更根本的原因），二是经济技术的落后。教训：落后就要挨打；但反侵略斗争具有正义性，绝非"不识时务"；必须推翻腐朽的封建制度，才能实现民族独立。',
+  examRefs:[{paper:'第1套',type:'论述题',q:'近代历次反侵略战争失败的原因和教训？'},{paper:'第1套',type:'辨析题',q:'"落后就要挨打"因而反侵略斗争是"不识时务"（错误）'}]});
+
+addEvent({year:1900,title:'义和团运动与列强瓜分破产',chapter:CH1,category:'understand',
+  textbook:'义和团运动虽然具有局限性，但粉碎了帝国主义列强瓜分和灭亡中国的图谋。中华民族进行的不屈不挠的反侵略斗争，是列强未能瓜分中国的最根本原因。',
+  examRefs:[{paper:'第1套',type:'简答题',q:'帝国主义列强未能瓜分中国的原因？'},{paper:'第1套',type:'单选题',q:'瓦德西言论说明什么？'}]});
+
+addEvent({year:1895,title:'民族意识普遍觉醒',chapter:CH1,category:'understand',
+  textbook:'鸦片战争后，先进中国人开始睁眼看世界；中日甲午战争以后，中国人民的民族意识开始普遍觉醒。1894年孙中山在檀香山创立兴中会时喊出"振兴中华"的时代最强音。',
+  examRefs:[{paper:'第1套',type:'简答题',q:'鸦片战争后反侵略斗争持续发展的原因和特点？'}]});
+
+addEvent({year:1900,title:'资本-帝国主义入侵的影响',chapter:CH1,category:'understand',
+  textbook:'资本-帝国主义入侵给中国带来了双重影响：一方面破坏了中国的主权和领土完整，把中国变成半殖民地半封建社会，遏制了中国资本主义的发展；另一方面带来了近代文明的因素。但侵略不是给中国带来近代文明，而是遏制了中国自身的发展。',
+  examRefs:[{paper:'第1套',type:'辨析题',q:'外国资本主义给中国带来近代文明（错误）'},{paper:'第1套',type:'材料题',q:'资本-帝国主义入侵对中国的影响'}]});
+
+addEvent({year:1900,title:'两大历史任务及其关系',chapter:CH1,category:'understand',
+  textbook:'近代中国两大历史任务：一是争得民族独立和人民解放；二是实现国家富强和人民富裕。前者为后者扫除障碍，创造必要前提；后者是前者的必然要求和最终目的。两者既相互区别又相互联系。',
+  examRefs:[{paper:'第1套',type:'简答题',q:'近代中国两大历史任务及其关系？'}]});
+
+addEvent({year:1900,title:'半殖民地半封建社会的形成',chapter:CH1,category:'understand',
+  textbook:'中国半殖民地半封建社会的形成经历了从鸦片战争（开始）到《南京条约》（开始沦为）→ 甲午战争后《马关条约》（进一步加深）→ 八国联军侵华后《辛丑条约》（完全沦为）的历史进程。',
+  examRefs:[{paper:'第1套',type:'简答题',q:'中国半殖民地半封建社会形成的历史进程？'}]});
+
+addEvent({year:1900,title:'近代反侵略斗争的意义',chapter:CH1,category:'understand',
+  textbook:'近代反侵略斗争的意义：打击了帝国主义侵华的野心，粉碎了帝国主义瓜分中国的图谋；振奋了民族精神，鼓舞了中国人民反帝反封建的斗志；促进了中国人民的民族觉醒。',
+  examRefs:[{paper:'第1套',type:'论述题',q:'近代反侵略斗争的意义？'}]});
+
+// ============ 第二章 对国家出路的早期探索 ============
+const CH2 = 2;
+
+addEvent({year:1851,title:'太平天国起义爆发',chapter:CH2,category:'memory',
+  textbook:'1851年1月，洪秀全在广西桂平县金田村发动起义，建号太平天国。是一次反对清政府腐朽统治和地主阶级压迫剥削的正义战争。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'太平天国失败标志是？'}]});
+
+addEvent({year:1853,title:'《天朝田亩制度》颁布',chapter:CH2,category:'memory',
+  textbook:'最能体现太平天国社会理想和这次农民起义特色的纲领性文件。以解决土地问题为中心，提出"凡天下田，天下人同耕"，反映了农民对土地的渴望，但带有空想性。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'《天朝田亩制度》的中心内容是？'}]});
+
+addEvent({year:1859,title:'《资政新篇》颁布',chapter:CH2,category:'memory',
+  textbook:'洪仁玕提出，带有资本主义色彩的改革方案。与《海国图志》的关键区别在于提出了发展资本主义的方案，是近代中国第一个比较系统的具有资本主义色彩的方案。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'《资政新篇》与《海国图志》的主要区别是？'},{paper:'第2套',type:'简答题',q:'《资政新篇》的主要内容和评价？'}]});
+
+addEvent({year:1864,title:'天京陷落',chapter:CH2,category:'memory',
+  textbook:'1864年7月，天京陷落，太平天国起义失败。失败的重要原因之一是缺乏科学理论指导。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'太平天国失败的重要原因是？'}]});
+
+addEvent({year:1865,title:'江南制造总局成立',chapter:CH2,category:'memory',
+  textbook:'洋务运动时期最大的兵工厂，由曾国藩、李鸿章在上海创办。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'洋务运动最大兵工厂是？'}]});
+
+addEvent({year:1866,title:'福州船政局成立',chapter:CH2,category:'memory',
+  textbook:'洋务运动时期最大的造船厂，由左宗棠在福州马尾创办。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'最大造船厂是？'}]});
+
+addEvent({year:1888,title:'北洋水师成军',chapter:CH2,category:'memory',
+  textbook:'洋务运动建立的最主要的一支海军，在甲午战争中全军覆没。',
+  examRefs:[{paper:'第2套',type:'单选题',q:'洋务运动时期海军主力是？'}]});
+
+addEvent({year:1898,title:'康有为著作及戊戌六君子',chapter:CH2,category:'memory',
+  textbook:'康有为撰写《新学伪经考》《孔子改制考》，为维新变法提供理论依据。戊戌政变后，谭嗣同、杨锐、林旭、杨深秀、刘光第、康广仁六人被杀，史称"戊戌六君子"。维新派创办《时务报》《国闻报》《湘报》等。',
+  examRefs:[{paper:'第2套',type:'多选题',q:'维新派报纸有哪些？戊戌六君子是？康有为著作是？'}]});
+
+// 理解性
+addEvent({year:1864,title:'太平天国起义的历史意义',chapter:CH2,category:'understand',
+  textbook:'太平天国起义沉重打击了封建统治阶级，强烈撼动了清政府的统治根基。它是中国旧式农民战争的最高峰。太平天国起义还冲击了孔子和儒家经典的正统权威，在一定程度上削弱了封建统治的精神支柱。',
+  examRefs:[{paper:'第2套',type:'论述题',q:'太平天国起义的历史意义？'}]});
+
+addEvent({year:1864,title:'农民斗争的意义和局限',chapter:CH2,category:'understand',
+  textbook:'农民斗争的意义：沉重打击封建统治阶级，撼动了清政府的统治根基。局限性：农民阶级不是新的生产力和生产关系的代表，缺乏科学理论指导，不能担负起领导反帝反封建斗争取得胜利的重任。',
+  examRefs:[{paper:'第2套',type:'辨析题',q:'《资政新篇》是农业社会主义方案（错误——带有资本主义色彩）'}]});
+
+addEvent({year:1895,title:'洋务运动的性质和失败原因',chapter:CH2,category:'understand',
+  textbook:'洋务运动是封建统治阶级的自救运动。失败原因：洋务运动具有封建性、依赖性、腐朽性。洋务运动破产的根本原因是引进设备而未变革封建制度。教训：不触动封建统治的根基，单纯引进技术和设备，不可能使中国富强起来。',
+  examRefs:[{paper:'第2套',type:'论述题',q:'洋务运动的性质和失败原因、教训？'},{paper:'第2套',type:'单选题',q:'洋务运动破产根本原因是？'}]});
+
+addEvent({year:1898,title:'戊戌维新运动的意义和教训',chapter:CH2,category:'understand',
+  textbook:'戊戌维新运动是一次爱国救亡运动，一场资产阶级性质的政治改良运动，一场思想启蒙运动。它推动了中国民族资本主义的发展，传播了资产阶级民主思想。教训：企图通过统治者走自上而下的改良道路是根本行不通的。',
+  examRefs:[{paper:'第2套',type:'论述题',q:'戊戌变法的进步意义和历史局限性？'},{paper:'第2套',type:'辨析题',q:'戊戌维新是资产阶级性质的改良运动（正确）'}]});
+
+addEvent({year:1898,title:'维新派与守旧派论战',chapter:CH2,category:'understand',
+  textbook:'论战内容主要围绕要不要变法（实行君主立宪制度）、要不要兴民权设议院、要不要废八股改科举和兴西学等问题展开。实质是资产阶级思想与封建主义思想的第一次正面交锋，是近代第一次思想解放潮流。',
+  examRefs:[{paper:'第2套',type:'简答题',q:'维新派与守旧派论战的内容？'},{paper:'第2套',type:'单选题',q:'维新变法发展为政治运动的关键是？'}]});
+
+// ============ 第三章 辛亥革命 ============
+const CH3 = 3;
+
+addEvent({year:1894,title:'孙中山创立兴中会',chapter:CH3,category:'memory',
+  textbook:'1894年孙中山在檀香山创立兴中会，是中国最早的资产阶级革命团体，提出"振兴中华"的口号。',
+  examRefs:[{paper:'第3套',type:'单选题',q:'最早资产阶级革命团体是？'}]});
+
+addEvent({year:1905,title:'同盟会成立',chapter:CH3,category:'memory',
+  textbook:'1905年孙中山在日本东京成立中国同盟会，是中国最早的资产阶级革命政党。机关刊物为《民报》，孙中山在发刊词中首次提出三民主义。',
+  examRefs:[{paper:'第3套',type:'单选题',q:'最早资产阶级革命政党是？同盟会机关刊物是？'}]});
+
+addEvent({year:1905,title:'三民主义学说提出',chapter:CH3,category:'memory',
+  textbook:'孙中山在《民报》发刊词中正式提出三民主义——民族主义（驱除鞑虏，恢复中华）、民权主义（创立民国）、民生主义（平均地权）。三民主义是一个比较完备的资产阶级民主革命纲领，但局限性在于没有明确提出反对帝国主义的要求。',
+  examRefs:[{paper:'第3套',type:'简答题',q:'三民主义学说的基本内容？'},{paper:'第3套',type:'单选题',q:'三民主义局限性是？'}]});
+
+addEvent({year:1912,title:'《中华民国临时约法》颁布',chapter:CH3,category:'memory',
+  textbook:'1912年3月，南京临时政府颁布《中华民国临时约法》，是中国第一部具有资产阶级共和国宪法性质的法典。',
+  examRefs:[{paper:'第3套',type:'单选题',q:'中国第一部资产阶级性质成文法是？'},{paper:'第3套',type:'辨析题',q:'《临时约法》是中国第一部具有资产阶级共和国宪法性质的法典（正确）'}]});
+
+addEvent({year:1911,title:'黄花岗起义',chapter:CH3,category:'memory',
+  textbook:'1911年4月，黄兴率敢死队进攻两广总督衙门，起义失败，七十二烈士葬于黄花岗。',
+  examRefs:[{paper:'第3套',type:'单选题',q:'黄花岗起义指挥者是？'}]});
+
+addEvent({year:1915,title:'护国运动',chapter:CH3,category:'memory',
+  textbook:'1915年蔡锷等在云南发动护国运动，反对袁世凯复辟帝制。',
+  examRefs:[{paper:'第3套',type:'单选题',q:'护国运动发动者是？'}]});
+
+addEvent({year:1911,title:'武昌起义',chapter:CH3,category:'memory',
+  textbook:'1911年10月10日，湖北新军中的文学社和共进会发动武昌起义，各省纷纷响应独立。',
+  examRefs:[{paper:'第3套',type:'多选题',q:'武昌起义的两个革命团体是？'}]});
+
+addEvent({year:1903,title:'革命宣传家及其著作',chapter:CH3,category:'memory',
+  textbook:'章炳麟（《驳康有为论革命书》）、邹容（《革命军》）、陈天华（《猛回头》《警世钟》）等大力宣传民主革命思想。',
+  examRefs:[{paper:'第3套',type:'多选题',q:'革命宣传家包括？陈天华著作是？'}]});
+
+// 理解性
+addEvent({year:1911,title:'辛亥革命的历史意义',chapter:CH3,category:'understand',
+  textbook:'辛亥革命推翻了统治中国几千年的君主专制制度，建立了中国历史上第一个资产阶级共和国。它是一次比较完全意义上的资产阶级民主革命。但辛亥革命未能改变中国半殖民地半封建的社会性质，未能完成反帝反封建的历史任务。',
+  examRefs:[{paper:'第3套',type:'简答题',q:'为什么说辛亥革命既胜利又失败？'},{paper:'第3套',type:'论述题',q:'为什么辛亥革命是较完全意义上的资产阶级民主革命？'}]});
+
+addEvent({year:1913,title:'辛亥革命失败的原因和教训',chapter:CH3,category:'understand',
+  textbook:'主观原因：资产阶级的软弱性和妥协性——没有提出彻底的反帝反封建纲领，不能充分发动和依靠广大人民群众。客观原因：中外反动势力的联合绞杀。教训：资产阶级共和国方案在中国行不通；中国革命必须由新的阶级来领导。',
+  examRefs:[{paper:'第3套',type:'论述题',q:'辛亥革命失败的原因和教训？'},{paper:'第3套',type:'辨析题',q:'辛亥革命是"不结果实的花"（错误——为新民主主义革命奠定基础）'}]});
+
+addEvent({year:1911,title:'三民主义：既完备又不彻底',chapter:CH3,category:'understand',
+  textbook:'三民主义是一个比较完备的资产阶级民主革命纲领，但不彻底：民族主义没有明确提出反对帝国主义；民权主义的"国民"范围狭窄；民生主义的"平均地权"没有与农民的土地要求联系起来。',
+  examRefs:[{paper:'第3套',type:'论述题',q:'三民主义既是比较完备又是不彻底的资产阶级革命纲领？'}]});
+
+addEvent({year:1911,title:'革命派与改良派的论战',chapter:CH3,category:'understand',
+  textbook:'革命派与改良派围绕要不要革命、要不要推翻清政府、要不要建立民主共和国、要不要实行社会革命等问题展开论战。主要阵地分别是《民报》和《新民丛报》。论战划清了革命与改良的界限，传播了民主革命思想。',
+  examRefs:[{paper:'第3套',type:'简答题',q:'革命派与改良派辩论的主要内容和意义？'}]});
+
+// ============ 第四章 开天辟地的大事变 ============
+const CH4 = 4;
+
+addEvent({year:1915,title:'新文化运动兴起',chapter:CH4,category:'memory',
+  textbook:'1915年陈独秀在上海创办《青年杂志》（后改名《新青年》），标志着新文化运动的开始。基本口号是"德先生"（Democracy，民主）和"赛先生"（Science，科学）。动摇了封建正统思想的统治地位。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'早期马克思主义传播主阵地是？陈独秀创办的刊物是？'}]});
+
+addEvent({year:1918,title:'李大钊率先举起马克思主义旗帜',chapter:CH4,category:'memory',
+  textbook:'1918年李大钊发表《法俄革命之比较观》《庶民的胜利》《布尔什维主义的胜利》三篇文章，在中国大地上率先举起马克思主义旗帜。1919年发表《我的马克思主义观》，标志着马克思主义在中国进入比较系统的传播阶段。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'最早接受和宣传马克思主义的是？'},{paper:'第4套',type:'多选题',q:'李大钊1918年三篇文章是？'}]});
+
+addEvent({year:1919,title:'五四运动爆发',chapter:CH4,category:'memory',
+  textbook:'导火线是巴黎和会中国外交失败。五四运动是中国近代史上一个划时代的事件，标志着中国新民主主义革命的开端。要求惩办的三个卖国贼是曹汝霖、章宗祥、陆宗舆。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'五四运动导火线是？'},{paper:'第4套',type:'多选题',q:'五四运动要求惩办的卖国贼是？'}]});
+
+addEvent({year:1920,title:'第一个共产主义小组成立',chapter:CH4,category:'memory',
+  textbook:'1920年，在陈独秀主持下，上海成立了中国第一个共产主义小组。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'第一个共产主义小组在哪里？'}]});
+
+addEvent({year:1921,title:'中共一大召开',chapter:CH4,category:'memory',
+  textbook:'1921年7月在上海召开，标志着中国共产党的正式成立。这是"开天辟地的大事变"，深刻改变了近代以后中华民族发展的方向和进程。',
+  examRefs:[{paper:'第4套',type:'论述题',q:'为什么说中国共产党成立是"开天辟地的大事变"？'}]});
+
+addEvent({year:1922,title:'中共二大：民主革命纲领',chapter:CH4,category:'memory',
+  textbook:'1922年中共二大明确提出反帝反封建的民主革命纲领（最低纲领），在中国近代史上第一次提出了彻底的反帝反封建的民主革命纲领。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'明确提出反帝反封建民主革命纲领的是？'},{paper:'第4套',type:'辨析题',q:'中共二大最低纲领是彻底的反帝反封建民主革命纲领（正确）'}]});
+
+addEvent({year:1924,title:'第一次国共合作',chapter:CH4,category:'memory',
+  textbook:'1924年国民党一大在广州召开，标志着第一次国共合作正式形成。合作的政治基础是新三民主义——因为新三民主义与中共民主革命纲领基本一致。改组后的国民党成为工人、农民、城市小资产阶级和民族资产阶级的革命联盟。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'第一次国共合作政治基础是？新三民主义成为合作基础因为？改组后国民党性质是？'}]});
+
+addEvent({year:1927,title:'马日事变',chapter:CH4,category:'memory',
+  textbook:'1927年5月，许克祥在长沙发动叛变（马日事变），屠杀共产党人和革命群众。',
+  examRefs:[{paper:'第4套',type:'单选题',q:'1927年长沙叛变是？'}]});
+
+// 理解性
+addEvent({year:1919,title:'五四运动的历史意义',chapter:CH4,category:'understand',
+  textbook:'五四运动是中国新民主主义革命的开端。它具有彻底的反帝反封建的革命性、追求救国强国真理的进步性、各族各界群众积极参与的广泛性。五四精神的核心是爱国主义。五四运动促进了马克思主义在中国的传播及其与中国工人运动的结合。',
+  examRefs:[{paper:'第4套',type:'简答题',q:'五四运动发生的原因及其伟大历史意义？'},{paper:'第4套',type:'辨析题',q:'五四运动是中国新民主主义革命开端（正确）'}]});
+
+addEvent({year:1921,title:'中国共产党成立的历史意义',chapter:CH4,category:'understand',
+  textbook:'中国共产党的成立是"开天辟地的大事变"。深刻改变了近代以后中华民族发展的方向和进程，深刻改变了中国人民和中华民族的前途和命运，深刻改变了世界发展的趋势和格局。中国共产党的初心使命是为中国人民谋幸福、为中华民族谋复兴。',
+  examRefs:[{paper:'第4套',type:'简答题',q:'中国共产党成立的伟大历史意义？'}]});
+
+addEvent({year:1927,title:'国民革命失败的原因和教训',chapter:CH4,category:'understand',
+  textbook:'国民革命失败的主要原因：客观上，中外反动势力强大、国民党右派叛变革命；主观上，中共处于幼年时期，以陈独秀为代表的右倾投降主义错误放弃了革命领导权。教训：必须坚持无产阶级领导权，必须建立革命的武装。',
+  examRefs:[{paper:'第4套',type:'简答题',q:'国民革命失败的原因及其历史意义？'},{paper:'第4套',type:'辨析题',q:'不实行国共合作就不会导致国民革命失败（错误）'}]});
+
+addEvent({year:1920,title:'先进分子为什么选择马克思主义',chapter:CH4,category:'understand',
+  textbook:'中国先进分子选择了马克思主义：一是各种主义（改良主义、无政府主义等）在实践中碰壁失败；二是十月革命的示范效应——"给我们送来了马克思列宁主义"；三是马克思主义本身的科学性、革命性和与中国国情的契合性。',
+  examRefs:[{paper:'第4套',type:'论述题',q:'中国先进分子为什么和怎样选择了马克思主义？'}]});
+
+addEvent({year:1927,title:'新民主主义革命对象：三座大山',chapter:CH4,category:'understand',
+  textbook:'新民主主义革命的对象是帝国主义、封建主义、官僚资本主义（三座大山）。帝国主义是中国人民最凶恶的敌人；封建主义是帝国主义统治中国的主要社会基础；官僚资本主义是依附帝国主义、勾结封建势力的国家垄断资本主义。',
+  examRefs:[{paper:'第4套',type:'论述题',q:'新民主主义革命为什么必须将帝国主义、封建主义、官僚资本主义作为对象？'}]});
+
+// ============ 第五章 中国革命的新道路 ============
+const CH5 = 5;
+
+addEvent({year:1927,title:'南昌起义',chapter:CH5,category:'memory',
+  textbook:'1927年8月1日，周恩来、贺龙、叶挺、朱德、刘伯承等领导南昌起义，打响了武装反抗国民党反动统治的第一枪，标志着创立红军的开始。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'创立红军开始于哪次事件？'}]});
+
+addEvent({year:1927,title:'八七会议',chapter:CH5,category:'memory',
+  textbook:'1927年8月7日在汉口召开，确定了土地革命和武装反抗国民党反动统治的总方针。毛泽东在会上提出"枪杆子里面出政权"的著名论断。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'确定土地革命和武装反抗总方针的会议是？毛泽东在八七会议上提出什么论断？'}]});
+
+addEvent({year:1929,title:'古田会议',chapter:CH5,category:'memory',
+  textbook:'1929年12月在福建上杭古田召开，确立了思想建党、政治建军的原则。决议中心思想是用无产阶级思想进行军队和党的建设。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'建党建军原则会议是？古田会议决议中心思想是？'}]});
+
+addEvent({year:1930,title:'《星星之火，可以燎原》',chapter:CH5,category:'memory',
+  textbook:'毛泽东为答复"红旗到底打得多久"的疑问而写，标志着农村包围城市、武装夺取政权革命道路理论的基本形成。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'革命道路理论基本形成的标志是？《星星之火，可以燎原》针对什么疑问？'}]});
+
+addEvent({year:1935,title:'遵义会议',chapter:CH5,category:'memory',
+  textbook:'1935年1月在遵义召开。党的历史上一个生死攸关的转折点，事实上确立了毛泽东在党中央和红军的领导地位，开始形成以毛泽东同志为核心的第一代中央领导集体。会后成立毛泽东、周恩来、王稼祥三人军事小组。遵义会议解决的主要问题是军事问题和组织问题。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'遵义会议后三人军事小组是？'},{paper:'第5套',type:'多选题',q:'遵义会议解决的主要问题是？'}]});
+
+addEvent({year:1935,title:'瓦窑堡会议',chapter:CH5,category:'memory',
+  textbook:'1935年12月在陕北瓦窑堡召开，确定了抗日民族统一战线的政策。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'确定抗日民族统一战线政策的会议是？'}]});
+
+addEvent({year:1935,title:'"一二·九"运动',chapter:CH5,category:'memory',
+  textbook:'1935年12月9日，北平学生举行抗日救国示威游行，推动了抗日救亡运动新高潮。成立中华民族解放先锋队。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'"一二九"运动成立的组织是？'}]});
+
+addEvent({year:1936,title:'红军三大主力会师',chapter:CH5,category:'memory',
+  textbook:'1936年10月，红一方面军、红二方面军、红四方面军在甘肃会宁会师，长征胜利结束。长征三大主力是红一方面军、红二方面军和红四方面军。',
+  examRefs:[{paper:'第5套',type:'多选题',q:'红军三大主力是？会师地点是？'}]});
+
+addEvent({year:1928,title:'《井冈山土地法》颁布',chapter:CH5,category:'memory',
+  textbook:'1928年毛泽东在井冈山主持制定，是中国共产党历史上第一个以法律形式肯定农民分配土地权利的土地法。',
+  examRefs:[{paper:'第5套',type:'单选题',q:'第一次以法律形式肯定农民分配土地权利的是？'}]});
+
+addEvent({year:1927,title:'三大起义',chapter:CH5,category:'memory',
+  textbook:'南昌起义（1927.8.1，打响了第一枪）、秋收起义（1927.9，毛泽东领导）、广州起义（1927.12）。',
+  examRefs:[{paper:'第5套',type:'多选题',q:'三大起义是？'}]});
+
+addEvent({year:1930,title:'毛泽东重要著作（1928-1930）',chapter:CH5,category:'memory',
+  textbook:'《中国的红色政权为什么能够存在》《井冈山的斗争》《星星之火，可以燎原》，初步形成了"工农武装割据"思想——土地革命（基本内容）、武装斗争（主要形式）、根据地建设（战略依托）。',
+  examRefs:[{paper:'第5套',type:'多选题',q:'"工农武装割据"包括哪些方面？毛泽东1928-1930年著作有哪些？'}]});
+
+// 理解性
+addEvent({year:1935,title:'遵义会议的历史意义',chapter:CH5,category:'understand',
+  textbook:'遵义会议是党的历史上一个生死攸关的转折点。它事实上确立了毛泽东在党中央和红军的领导地位，开始形成以毛泽东同志为核心的第一代中央领导集体，开启了党独立自主解决中国革命实际问题的新阶段。遵义会议的特点是"坚持真理、修正错误"。',
+  examRefs:[{paper:'第5套',type:'简答题',q:'遵义会议的内容和历史意义？'}]});
+
+addEvent({year:1936,title:'红军长征胜利的历史意义',chapter:CH5,category:'understand',
+  textbook:'长征是一次理想信念的伟大远征，一次检验真理的伟大远征，一次唤醒民众的伟大远征，一次开创新局的伟大远征。长征是使中国革命转危为安的关键，实现了中国共产党和中国革命事业从挫折走向胜利的伟大转折。',
+  examRefs:[{paper:'第5套',type:'简答题',q:'红军长征胜利的伟大历史意义？'}]});
+
+addEvent({year:1930,title:'中国革命新道路的探索',chapter:CH5,category:'understand',
+  textbook:'以毛泽东为代表的中国共产党人开辟了农村包围城市、武装夺取政权的革命新道路。中国红色政权能够存在和发展的原因和条件：中国是政治经济发展极不平衡的半殖民地半封建大国、良好的群众基础、全国革命形势的向前发展、相当力量的正式红军的存在、共产党组织的有力量和它的政策的不错误。',
+  examRefs:[{paper:'第5套',type:'简答题',q:'中国红色政权存在和发展的原因和条件？'},{paper:'第5套',type:'论述题',q:'以毛泽东为代表的中国共产党人如何探索和开辟中国革命新道路？'},{paper:'第5套',type:'辨析题',q:'"城市中心论"适合我国实际（错误——应走农村包围城市道路）'}]});
+
+addEvent({year:1935,title:'三次"左"倾错误及原因',chapter:CH5,category:'understand',
+  textbook:'以王明为代表的"左"倾冒险主义给中国革命造成严重危害。一再出现"左"倾错误的原因：一是对马克思主义理论和中国国情缺乏全面深刻的理解；二是党内缺乏识别和抵制错误路线的能力与机制；三是共产国际的错误指导。',
+  examRefs:[{paper:'第5套',type:'论述题',q:'三次"左"倾错误观点及一再出现的原因？'}]});
+
+addEvent({year:1935,title:'"一二·九"运动的历史经验',chapter:CH5,category:'understand',
+  textbook:'"一二·九"运动是抗战动员的运动，是准备思想和干部的运动，是动员全民族的运动。它证明了中国共产党是抗日救亡运动的领导力量，知识青年只有在中国共产党的领导下走与工农相结合的道路才能找到正确的方向。',
+  examRefs:[{paper:'第5套',type:'论述题',q:'"一二·九"运动的历史经验和如何继承发扬？'}]});
+
+// ============ 第六章 中华民族的抗日战争 ============
+const CH6 = 6;
+
+addEvent({year:1931,title:'九一八事变',chapter:CH6,category:'memory',
+  textbook:'1931年9月18日，日本关东军发动九一八事变，武装侵占中国东北。日本变中国为其独占殖民地的侵略战争由此开始。',
+  examRefs:[{paper:'第5套',type:'辨析题',q:'"九一八"事变是偶发事件（错误——日本蓄谋已久）'}]});
+
+addEvent({year:1937,title:'七七事变（卢沟桥事变）',chapter:CH6,category:'memory',
+  textbook:'1937年7月7日，日本发动卢沟桥事变，日本全面侵华战争由此开始，中国全民族抗战也由此开始。牺牲将领：佟麟阁、赵登禹。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'全国性抗战开始于？卢沟桥事变牺牲将领是？'}]});
+
+addEvent({year:1937,title:'平型关战役',chapter:CH6,category:'memory',
+  textbook:'1937年9月，八路军第115师在平型关伏击日军，取得全国抗战以来的首次大捷。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'抗战首次大捷是？'}]});
+
+addEvent({year:1938,title:'台儿庄战役',chapter:CH6,category:'memory',
+  textbook:'1938年春，国民党军在台儿庄对日军展开激战，是正面战场取得的最大胜利。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'正面战场第一个大胜利是？'}]});
+
+addEvent({year:1940,title:'百团大战',chapter:CH6,category:'memory',
+  textbook:'1940年8月至12月，八路军在华北对日军发动大规模进攻战役，总指挥为彭德怀。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'百团大战总指挥是？'}]});
+
+addEvent({year:1941,title:'皖南事变',chapter:CH6,category:'memory',
+  textbook:'1941年1月，国民党顽固派在安徽泾县袭击新四军军部。事变后，中共中央重建新四军军部，任命陈毅为代理军长、刘少奇为政治委员。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'皖南事变后新四军政委是？'}]});
+
+addEvent({year:1937,title:'抗日民族统一战线正式形成',chapter:CH6,category:'memory',
+  textbook:'1937年9月，国民党中央通讯社发表《中共中央为公布国共合作宣言》，蒋介石发表谈话承认中共合法地位，标志着以国共两党合作为基础的抗日民族统一战线正式形成。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'抗日民族统一战线正式形成标志是？'},{paper:'第6套',type:'辨析题',q:'西安事变和平解决标志抗日民族统一战线正式形成（错误）'}]});
+
+addEvent({year:1940,title:'敌后战场",三三制"政权',chapter:CH6,category:'memory',
+  textbook:'抗日根据地建立"三三制"政权——共产党员占1/3，非党进步分子占1/3，中间分子（民族资产阶级和开明绅士）占1/3。这是新民主主义性质的政权。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'"三三制"政权性质是？'},{paper:'第6套',type:'多选题',q:'"三三制"组成是？'}]});
+
+addEvent({year:1945,title:'中共七大',chapter:CH6,category:'memory',
+  textbook:'1945年在延安召开。大会把毛泽东思想确定为党的一切工作的指针，标志着党在政治上思想上组织上走向成熟。七大是"团结的大会，胜利的大会"。毛泽东在会上作《论联合政府》的政治报告。',
+  examRefs:[{paper:'第6套',type:'单选题',q:'中共七大确定什么为指导思想？'}]});
+
+addEvent({year:1941,title:'延安整风运动',chapter:CH6,category:'memory',
+  textbook:'一次深刻的马克思主义思想教育运动和思想解放运动。主要内容是反对主观主义以整顿学风、反对宗派主义以整顿党风、反对党八股以整顿文风。实事求是的思想路线在全党范围确立起来。',
+  examRefs:[{paper:'第6套',type:'多选题',q:'十大政策的两个中心环节是？'}]});
+
+// 理解性
+addEvent({year:1945,title:'中国共产党是抗战的中流砥柱',chapter:CH6,category:'understand',
+  textbook:'中国共产党是抗日战争的中流砥柱。中国共产党倡导、促成、维护了抗日民族统一战线；制定了全面抗战路线和持久战的战略总方针；开辟的敌后战场逐渐成为抗战主战场。',
+  examRefs:[{paper:'第6套',type:'论述题',q:'中国共产党在抗日战争中的地位和作用？'}]});
+
+addEvent({year:1945,title:'全面抗战路线vs片面抗战路线',chapter:CH6,category:'understand',
+  textbook:'两条抗战路线的根本分歧是要不要放手发动人民群众。共产党实行全面的全民族抗战路线；国民党实行片面抗战路线——单纯依靠政府和军队，不发动群众。片面抗战路线是正面战场丧师失地的根本原因。',
+  examRefs:[{paper:'第6套',type:'简答题',q:'什么是全面的全民族抗战路线？怎样评价国民党正面战场执行的路线？'},{paper:'第6套',type:'单选题',q:'丧师失地根本原因是？全面抗战与片面抗战根本分歧是？'}]});
+
+addEvent({year:1945,title:'抗战胜利的原因和意义',chapter:CH6,category:'understand',
+  textbook:'抗战胜利原因：以爱国主义为核心的民族精神是决定因素；中国共产党的中流砥柱作用是关键；全民族抗战是重要法宝；世界反法西斯力量的支持。抗战胜利的意义：是中华民族从近代以来陷入深重危机走向伟大复兴的历史转折点；是世界反法西斯战争的重要组成部分。',
+  examRefs:[{paper:'第6套',type:'简答题',q:'抗战胜利的原因？'},{paper:'第6套',type:'论述题',q:'中国抗日战争在世界反法西斯战争中的重要地位和作用？为什么是弱国战胜强国的范例？'}]});
+
+addEvent({year:1945,title:'正面战场和敌后战场的关系',chapter:CH6,category:'understand',
+  textbook:'正面战场和敌后战场是相互配合、互为补充的关系。在战略防御阶段，正面战场是抗战的主战场；进入相持阶段后，敌后战场逐步成为抗战的主战场。两个战场共同构成了中国抗日战争的整体。',
+  examRefs:[{paper:'第6套',type:'论述题',q:'正面战场和敌后战场的区别和联系？'}]});
+
+addEvent({year:1941,title:'中共抗日民族统一战线策略',chapter:CH6,category:'understand',
+  textbook:'策略总方针：发展进步势力（工人、农民、城市小资产阶级），争取中间势力（民族资产阶级、开明绅士、地方实力派），孤立顽固势力（以蒋介石为代表的大地主大资产阶级）。对顽固派斗争的方针是"有理、有利、有节"。',
+  examRefs:[{paper:'第6套',type:'简答题',q:'中共在抗日民族统一战线中的策略总方针？'}]});
+
+// ============ 第七章 为新中国而奋斗 ============
+const CH7 = 7;
+
+addEvent({year:1945,title:'重庆谈判与《双十协定》',chapter:CH7,category:'memory',
+  textbook:'1945年8月，毛泽东、周恩来、王若飞赴重庆谈判。国共双方签署《双十协定》。谈判和政协斗争的焦点是军队和政权问题。谈判期间上党战役的胜利配合了谈判。',
+  examRefs:[{paper:'第7套',type:'单选题',q:'重庆谈判期间自卫战胜利是？'},{paper:'第7套',type:'多选题',q:'重庆谈判中共代表是？政协出席会议党派是？'}]});
+
+addEvent({year:1946,title:'全面内战爆发',chapter:CH7,category:'memory',
+  textbook:'1946年6月，国民党军进攻中原解放区，全面内战爆发。解放战争时期美国的基本政策是扶蒋反共。',
+  examRefs:[{paper:'第7套',type:'单选题',q:'全面内战爆发的标志是？解放战争美国基本政策是？'}]});
+
+addEvent({year:1947,title:'刘邓大军挺进大别山',chapter:CH7,category:'memory',
+  textbook:'1947年6月，刘伯承、邓小平率军千里跃进大别山，揭开了解放战争战略反攻的序幕，是全国性进攻开始的标志。',
+  examRefs:[{paper:'第7套',type:'单选题',q:'全国性进攻序幕是？战略反攻标志是？'}]});
+
+addEvent({year:1948,title:'三大战役',chapter:CH7,category:'memory',
+  textbook:'辽沈战役、淮海战役、平津战役，共歼灭国民党军队154万余人。',
+  examRefs:[{paper:'第7套',type:'多选题',q:'三路大军外线作战是？'}]});
+
+addEvent({year:1949,title:'渡江战役与南京解放',chapter:CH7,category:'memory',
+  textbook:'1949年4月23日，中国人民解放军占领南京，宣告延续22年之久的国民党反动统治覆灭。',
+  examRefs:[{paper:'第7套',type:'单选题',q:'南京解放标志着？'}]});
+
+addEvent({year:1949,title:'七届二中全会',chapter:CH7,category:'memory',
+  textbook:'1949年3月在河北西柏坡召开。确定党的工作重心从农村转向城市。毛泽东提出"两个务必"——务必继续保持谦虚、谨慎、不骄、不躁的作风，务必继续保持艰苦奋斗的作风。',
+  examRefs:[{paper:'第7套',type:'单选题',q:'由城市领导乡村时期开始的会议是？'}]});
+
+addEvent({year:1949,title:'中国人民政治协商会议与《共同纲领》',chapter:CH7,category:'memory',
+  textbook:'1949年9月在北平召开，通过《中国人民政治协商会议共同纲领》，在一个时期内起着新中国临时宪法的作用。',
+  examRefs:[{paper:'第7套',type:'多选题',q:'《中国土地法大纲》内容是？'}]});
+
+addEvent({year:1946,title:'《五四指示》',chapter:CH7,category:'memory',
+  textbook:'1946年5月发布《关于清算减租及土地问题的指示》（五四指示），将减租减息政策改为没收地主土地分配给农民的政策。',
+  examRefs:[{paper:'第7套',type:'单选题',q:'减租减息改为没收地主土地的文件是？'},{paper:'第7套',type:'辨析题',q:'《中国土地法大纲》改变了减租减息政策（错误——是《五四指示》先做出改变）'}]});
+
+// 理解性
+addEvent({year:1949,title:'中国革命胜利的历史意义',chapter:CH7,category:'understand',
+  textbook:'彻底结束了旧中国半殖民地半封建社会的历史，实现了中国从几千年封建专制政治向人民民主的伟大飞跃。中国人民从此站立起来了，中华民族发展进步从此开启了新纪元。',
+  examRefs:[{paper:'第7套',type:'简答题',q:'中国革命胜利的历史意义？'}]});
+
+addEvent({year:1949,title:'中国革命胜利的基本经验',chapter:CH7,category:'understand',
+  textbook:'毛泽东总结中国革命的基本经验（三大法宝）：统一战线、武装斗争、党的建设。中国革命的胜利证明：没有共产党就没有新中国。人民民主专政需要工人阶级的领导，基础是工人阶级、农民阶级和城市小资产阶级的联盟。',
+  examRefs:[{paper:'第7套',type:'论述题',q:'"没有共产党就没有新中国"，中国革命胜利的基本经验？'}]});
+
+addEvent({year:1947,title:'第二条战线形成的原因和意义',chapter:CH7,category:'understand',
+  textbook:'第二条战线是国民党统治区的以学生运动为先导的人民民主运动。形成原因：国民党政府的专制独裁统治和官吏腐败；严重的政治经济危机。意义：配合了军事战场的斗争，形成了反对国民党统治的第二条战线。',
+  examRefs:[{paper:'第7套',type:'简答题',q:'反蒋第二条战线形成的原因和意义？'}]});
+
+addEvent({year:1949,title:'国民党政府迅速崩溃的原因',chapter:CH7,category:'understand',
+  textbook:'国民党政府陷入全民包围并迅速崩溃的原因：政治上实行一党专政和个人独裁，失去民心；经济上四大家族官僚资本垄断导致民不聊生；军事上战略失误，军队丧失战斗力；国际上美援亦无法挽救其颓势。',
+  examRefs:[{paper:'第7套',type:'论述题',q:'国民党政府为何陷入全民包围并迅速崩溃？'}]});
+
+addEvent({year:1947,title:'资产阶级共和国方案为何行不通',chapter:CH7,category:'understand',
+  textbook:'资产阶级共和国方案在中国行不通：一是帝国主义不允许中国成为独立的资本主义国家；二是中国民族资产阶级力量软弱，不能领导反帝反封建革命；三是人民大众不赞成资产阶级共和国方案。第三条道路的破产代表标志是蒋介石下令解散中国民主同盟。',
+  examRefs:[{paper:'第7套',type:'材料题',q:'资产阶级共和国方案为什么行不通？'},{paper:'第7套',type:'单选题',q:'第三条道路破产标志是？'}]});
+
+// ============ 第八章 社会主义基本制度的确立 ============
+const CH8 = 8;
+
+addEvent({year:1949,title:'中华人民共和国成立',chapter:CH8,category:'memory',
+  textbook:'1949年10月1日中华人民共和国成立，中国人民从此站立起来了。国体是工人阶级领导的以工农联盟为基础的人民民主专政；政体是人民代表大会制度。',
+  examRefs:[{paper:'第8套',type:'论述题',q:'为什么说中华人民共和国成立开创了中国历史新纪元？'}]});
+
+addEvent({year:1953,title:'抗美援朝胜利',chapter:CH8,category:'memory',
+  textbook:'1950-1953年抗美援朝战争，打破了美国军队不可战胜的神话，打出了国威军威。西方侵略者几百年来只要在东方一个海岸上架起几尊大炮就可霸占一个国家的时代一去不复返了。',
+  examRefs:[{paper:'第8套',type:'单选题',q:'抗美援朝胜利的意义是？'}]});
+
+addEvent({year:1953,title:'过渡时期总路线',chapter:CH8,category:'memory',
+  textbook:'"一化三改"——逐步实现国家的社会主义工业化，并逐步实现国家对农业、对手工业和对资本主义工商业的社会主义改造。主体是工业化，两翼是三大改造。第一个五年计划优先发展重工业。',
+  examRefs:[{paper:'第8套',type:'单选题',q:'第一个五年计划优先发展？过渡时期总路线主要任务是？'},{paper:'第8套',type:'辨析题',q:'过渡时期总路线主要任务是解决所有制问题（错误——工业化和改造并举）'}]});
+
+addEvent({year:1956,title:'社会主义改造基本完成',chapter:CH8,category:'memory',
+  textbook:'1956年社会主义改造基本完成，社会主义基本制度在中国大地落地生根。这是中国历史上最伟大最深刻的社会变革。对资本主义工商业的改造实行"和平赎买"政策。',
+  examRefs:[{paper:'第8套',type:'单选题',q:'对资本主义工商业改造政策是？进入社会主义初级阶段标志是？'}]});
+
+addEvent({year:1953,title:'过渡时期的三种经济和三种力量',chapter:CH8,category:'memory',
+  textbook:'三种主要经济成分：社会主义经济、个体经济、私人资本主义经济。三种基本阶级力量：工人阶级、资产阶级、农民和其他小资产阶级。',
+  examRefs:[{paper:'第8套',type:'多选题',q:'三种主要经济成分是？三种基本阶级力量是？'}]});
+
+addEvent({year:1949,title:'没收官僚资本的双重性质',chapter:CH8,category:'understand',
+  textbook:'没收官僚资本具有双重革命性质：从反对官僚资产阶级这一方面看，属于民主革命的性质；从消灭垄断资本主义大资产阶级这一方面看，又属于社会主义革命的性质。',
+  examRefs:[{paper:'第8套',type:'简答题',q:'没收官僚资本的双重革命性质？'}]});
+
+addEvent({year:1956,title:'社会主义制度确立：历史和人民的选择',chapter:CH8,category:'understand',
+  textbook:'社会主义制度在中国的确立是历史和人民的选择。走社会主义道路是近代以来中国历史发展的必然结果；资本主义道路走不通，只有社会主义才能救中国；社会主义改造的胜利，实现了新民主主义到社会主义的过渡。',
+  examRefs:[{paper:'第8套',type:'论述题',q:'社会主义制度在中国的确立是历史和人民的选择？为什么完成社会主义改造是中国历史上最伟大最深刻的社会变革？'}]});
+
+addEvent({year:1956,title:'新民主主义社会的过渡性质',chapter:CH8,category:'understand',
+  textbook:'新民主主义社会是一个过渡性质的社会，它既不同于资本主义社会，也不同于社会主义社会。其基本矛盾是无产阶级和资产阶级的矛盾。在这个社会中社会主义因素不断增长，最终实现向社会主义的过渡。',
+  examRefs:[{paper:'第8套',type:'材料题',q:'新民主主义社会的性质及其与社会主义社会的关系？为什么"确立新民主主义社会秩序"的提法是有害的？'}]});
+
+// ============ 第九章 社会主义建设在探索中曲折发展 ============
+const CH9 = 9;
+
+addEvent({year:1956,title:'《论十大关系》发表',chapter:CH9,category:'memory',
+  textbook:'1956年毛泽东在中央政治局扩大会议上作《论十大关系》报告，提出"调动一切积极因素为社会主义事业服务"的基本方针，标志着中国共产党探索适合中国国情的社会主义建设道路的开始。',
+  examRefs:[{paper:'第9套',type:'单选题',q:'1956年毛泽东的报告是？'}]});
+
+addEvent({year:1956,title:'中共八大',chapter:CH9,category:'memory',
+  textbook:'1956年9月召开，正确分析社会主义改造完成后国内主要矛盾：人民对于经济文化迅速发展的需要同当前经济文化不能满足人民需要之间的矛盾。主要任务是集中力量发展社会生产力。',
+  examRefs:[{paper:'第9套',type:'单选题',q:'中共八大确定社会主义改造完成后主要矛盾是？'}]});
+
+addEvent({year:1957,title:'《关于正确处理人民内部矛盾的问题》',chapter:CH9,category:'memory',
+  textbook:'1957年毛泽东在最高国务会议上的讲话。指出社会主义社会的基本矛盾是生产关系和生产力、上层建筑和经济基础之间的矛盾。创立了关于两类不同性质矛盾的学说：敌我矛盾和人民内部矛盾。',
+  examRefs:[{paper:'第9套',type:'单选题',q:'社会主义建设中基本矛盾是？1957年毛泽东在最高国务会议的讲话是？'}]});
+
+addEvent({year:1964,title:'"四个现代化"战略目标',chapter:CH9,category:'memory',
+  textbook:'1964年周恩来在三届全国人大一次会议上宣布实现四个现代化——工业现代化、农业现代化、国防现代化、科学技术现代化。两步走发展战略：第一步建立独立完整工业体系和国民经济体系；第二步全面实现四个现代化。',
+  examRefs:[{paper:'第9套',type:'多选题',q:'两步走发展战略是？'}]});
+
+addEvent({year:1961,title:'"调整、巩固、充实、提高"八字方针',chapter:CH9,category:'memory',
+  textbook:'1961年八届九中全会决定实行"调整、巩固、充实、提高"八字方针，开始纠正大跃进以来的"左"倾错误。',
+  examRefs:[{paper:'第9套',type:'单选题',q:'八届九中全会八字方针是？'}]});
+
+addEvent({year:1966,title:'"文化大革命"始末',chapter:CH9,category:'memory',
+  textbook:'1966-1976年。"文化大革命"导火线是《评新编历史剧〈海瑞罢官〉》发表。1966年八届十一中全会通过《关于无产阶级文化大革命的决定》。主要理论基础是"无产阶级专政下继续革命的理论"。',
+  examRefs:[{paper:'第9套',type:'单选题',q:'文化大革命导火线是？将阶级斗争扩大化的会议是？理论基础是？'}]});
+
+addEvent({year:1956,title:'毛泽东探索社会主义建设道路',chapter:CH9,category:'understand',
+  textbook:'毛泽东是探索社会主义建设道路的开创者。早期探索中的理论建树包括：提出马克思主义与中国实际的"第二次结合"、《论十大关系》、八大正确路线、《关于正确处理人民内部矛盾的问题》中关于两类矛盾的学说。',
+  examRefs:[{paper:'第9套',type:'简答题',q:'毛泽东提出的马克思主义和中国实际的"第二次结合"思想？'},{paper:'第9套',type:'论述题',q:'1956-1957年早期探索中的理论建树？毛泽东是探索社会主义建设道路的开创者'}]});
+
+addEvent({year:1966,title:'"文化大革命"的历史教训',chapter:CH9,category:'understand',
+  textbook:'"文化大革命"是一场由领导者错误发动、被反革命集团利用、给党国家和各族人民带来严重灾难的内乱。教训：必须坚持以经济建设为中心；必须健全民主集中制和社会主义法制；必须坚持以正确的方法处理社会主义条件下的各种矛盾。',
+  examRefs:[{paper:'第9套',type:'辨析题',q:'"文化大革命"前十年错误是主要的（错误——成绩是主要的）'}]});
+
+addEvent({year:1958,title:'社会主义建设总路线的评价',chapter:CH9,category:'understand',
+  textbook:'1958年社会主义建设总路线："鼓足干劲、力争上游、多快好省地建设社会主义"。反映了人民群众迫切要求改变我国经济落后状况的普遍愿望，但忽视了客观经济规律，造成了"大跃进"的失误。',
+  examRefs:[{paper:'第9套',type:'简答题',q:'1958年社会主义建设总路线的内容及评价？'},{paper:'第9套',type:'辨析题',q:'社会主义建设总路线符合客观实际（错误——忽视客观经济规律）'}]});
+
+// ============ 第十章 改革开放与现代化建设新时期 ============
+const CH10 = 10;
+
+addEvent({year:1978,title:'真理标准问题大讨论',chapter:CH10,category:'memory',
+  textbook:'1978年5月，《实践是检验真理的唯一标准》发表引发大讨论。这是一场深刻而广泛的马克思主义思想解放运动，继延安整风后又一次思想解放。',
+  examRefs:[{paper:'第10套',type:'简答题',q:'真理标准问题大讨论的意义？'},{paper:'第10套',type:'单选题',q:'真理标准问题讨论的意义是？'}]});
+
+addEvent({year:1978,title:'中共十一届三中全会',chapter:CH10,category:'memory',
+  textbook:'1978年12月召开，实现了新中国成立以来党的历史上具有深远意义的伟大转折，开启了改革开放和社会主义现代化建设新时期。邓小平在会上作《解放思想，实事求是，团结一致向前看》的讲话。',
+  examRefs:[{paper:'第10套',type:'论述题',q:'为什么中共十一届三中全会是伟大历史转折？'},{paper:'第10套',type:'单选题',q:'进入改革开放新时期的会议是？邓小平讲话是？'}]});
+
+addEvent({year:1981,title:'《关于建国以来党的若干历史问题的决议》',chapter:CH10,category:'memory',
+  textbook:'1981年十一届六中全会通过。科学评价毛泽东：功绩是第一位的，错误是第二位的。毛泽东思想的活的灵魂——实事求是、群众路线、独立自主。',
+  examRefs:[{paper:'第10套',type:'单选题',q:'十一届六中全会通过的文件是？'}]});
+
+addEvent({year:1982,title:'中共十二大',chapter:CH10,category:'memory',
+  textbook:'1982年召开，邓小平提出"把马克思主义的普遍真理同我国的具体实际结合起来，走自己的道路，建设有中国特色的社会主义"的重大命题。',
+  examRefs:[{paper:'第10套',type:'论述题',q:'十一届三中全会以来主要成就及根本原因？'}]});
+
+addEvent({year:1987,title:'中共十三大',chapter:CH10,category:'memory',
+  textbook:'系统阐述了社会主义初级阶段理论；提出了"一个中心、两个基本点"的基本路线：以经济建设为中心，坚持四项基本原则，坚持改革开放；制定了"三步走"发展战略。四项基本原则：坚持社会主义道路、坚持人民民主专政、坚持共产党的领导、坚持马克思列宁主义毛泽东思想。',
+  examRefs:[{paper:'第10套',type:'单选题',q:'十三大基本路线概括为？'},{paper:'第10套',type:'多选题',q:'基本路线是？'}]});
+
+addEvent({year:1992,title:'邓小平南方谈话',chapter:CH10,category:'memory',
+  textbook:'深刻回答了长期困扰和束缚人们思想的许多重大问题。提出三个"有利于"标准；"发展才是硬道理"；"社会主义的本质是解放生产力、发展生产力、消灭剥削、消除两极分化、最终达到共同富裕"。是第二个解放思想、实事求是的宣言书。',
+  examRefs:[{paper:'第10套',type:'单选题',q:'1992年进入新发展阶段指？'}]});
+
+addEvent({year:1992,title:'中共十四大',chapter:CH10,category:'memory',
+  textbook:'确定我国经济体制改革的目标是建立社会主义市场经济体制。',
+  examRefs:[{paper:'第10套',type:'单选题',q:'十四大确立的改革目标是？'}]});
+
+addEvent({year:1997,title:'中共十五大 / 香港回归',chapter:CH10,category:'memory',
+  textbook:'1997年中共十五大将邓小平理论确定为党的指导思想。同年7月1日，香港回归祖国，是"一国两制"构想的伟大实践。1999年12月20日澳门回归。',
+  examRefs:[{paper:'第10套',type:'多选题',q:'港澳方针是？'}]});
+
+addEvent({year:2001,title:'中国加入世贸组织',chapter:CH10,category:'memory',
+  textbook:'2001年12月，中国正式加入世界贸易组织，成为第143个成员。标志着中国对外开放进入了一个新阶段。',
+  examRefs:[{paper:'第10套',type:'单选题',q:'对外开放进入新阶段的标志是？'}]});
+
+addEvent({year:2002,title:'中共十六大 / "三个代表"重要思想',chapter:CH10,category:'memory',
+  textbook:'2002年召开，"三个代表"重要思想被确立为党的指导思想并写入党章，提出了全面建设小康社会的奋斗目标。',
+  examRefs:[{paper:'第10套',type:'多选题',q:'"三个代表"是指？'}]});
+
+addEvent({year:2012,title:'中共十八大 / 新时代',chapter:CH10,category:'memory',
+  textbook:'2012年党的十八大以来，中国特色社会主义进入新时代。习近平新时代中国特色社会主义思想实现了马克思主义中国化时代化新的飞跃。',
+  examRefs:[{paper:'第10套',type:'论述题',q:'为什么中共十一届三中全会是伟大历史转折？'}]});
+
+addEvent({year:2021,title:'建党百年 / 伟大建党精神',chapter:CH10,category:'memory',
+  textbook:'伟大建党精神：坚持真理、坚守理想，践行初心、担当使命，不怕牺牲、英勇斗争，对党忠诚、不负人民。十九届六中全会通过《中共中央关于党的百年奋斗重大成就和历史经验的决议》。',
+  examRefs:[{paper:'第10套',type:'论述题',q:'中国共产党成立以来所做的三件大事及其影响？'}]});
+
+addEvent({year:2022,title:'中共二十大 / 中国式现代化',chapter:CH10,category:'memory',
+  textbook:'党的二十大提出中心任务：以中国式现代化全面推进中华民族伟大复兴。中国式现代化五个特征：人口规模巨大、全体人民共同富裕、物质文明和精神文明相协调、人与自然和谐共生、走和平发展道路。',
+  examRefs:[{paper:'第10套',type:'论述题',q:'如何使中国特色社会主义道路越走越宽广？'}]});
+
+addEvent({year:1980,title:'经济特区设立',chapter:CH10,category:'memory',
+  textbook:'1980年正式设立深圳、珠海、汕头、厦门四个经济特区，成为中国改革开放的重要窗口。',
+  examRefs:[{paper:'第10套',type:'多选题',q:'1980年经济特区有哪些？'}]});
+
+addEvent({year:1978,title:'改革开放的伟大历史转折',chapter:CH10,category:'understand',
+  textbook:'十一届三中全会实现了党的历史上具有深远意义的伟大转折。改革开放是新的伟大革命（不是否定社会主义制度，而是社会主义制度的自我完善和发展）。取得一切成绩和进步的根本原因：开辟了中国特色社会主义道路，形成了中国特色社会主义理论体系。',
+  examRefs:[{paper:'第10套',type:'论述题',q:'为什么中共十一届三中全会是伟大历史转折？十一届三中全会以来主要成就及根本原因？'},{paper:'第10套',type:'辨析题',q:'改革开放是新的伟大革命（正确）'}]});
+
+addEvent({year:2001,title:'改革开放成就的根本原因',chapter:CH10,category:'understand',
+  textbook:'改革开放以来取得一切成绩和进步的根本原因：开辟了中国特色社会主义道路，形成了中国特色社会主义理论体系，确立了中国特色社会主义制度，发展了中国特色社会主义文化。',
+  examRefs:[{paper:'第10套',type:'材料题',q:'改革开放取得成就的根本原因？'}]});
+
+addEvent({year:2020,title:'脱贫攻坚 / 全面建成小康社会',chapter:CH10,category:'understand',
+  textbook:'脱贫攻坚战取得全面胜利，完成了消除绝对贫困的艰巨任务。脱贫攻坚精神：上下同心、尽锐出战、精准务实、开拓创新、攻坚克难、不负人民。新时代十年的三件大事之一。',
+  examRefs:[{paper:'第10套',type:'简答题',q:'中国共产党成立以来所做的三件大事及其影响？'}]});
+
+// ==================== 渲染引擎 ====================
+
+const YEAR_START = 1839;
+const YEAR_END = 2023;
+const PX_PER_YEAR = 28;
+const trackEl = document.getElementById('track');
+const viewport = document.getElementById('viewport');
+const chapterTabs = document.getElementById('chapterTabs');
+const overlay = document.getElementById('overlay');
+const detailHeader = document.getElementById('detailHeader');
+const detailBody = document.getElementById('detailBody');
+const hint = document.getElementById('hint');
+const zoomLabel = document.getElementById('zoomLabel');
+
+let currentFilter = 'all';
+let zoomLevel = 1.0;
+let anchorBaseX = 0;
+const ZOOM_MIN = 0.50;
+const ZOOM_MAX = 5.0;
+const ZOOM_SPEED_WHEEL = 0.08;
+let baseTrackWidth = 0;
+
+const positionedEls = [];
+let svgEl = null;
+
+const CHAPTER_NAMES = {
+  1:'第一章 磨难与抗争',
+  2:'第二章 早期探索',
+  3:'第三章 辛亥革命',
+  4:'第四章 开天辟地',
+  5:'第五章 革命新道路',
+  6:'第六章 抗日战争',
+  7:'第七章 为新中国奋斗',
+  8:'第八章 社会主义制度',
+  9:'第九章 建设探索',
+  10:'第十章 改革开放新时代'
+};
+
+function xPos(year) {
+  return (year - YEAR_START) * PX_PER_YEAR + 120;
+}
+
+function displayX(baseX) {
+  return (baseX - anchorBaseX) * zoomLevel + anchorBaseX;
+}
+
+function buildChapterTabs() {
+  let html = '';
+  for (let i=1; i<=10; i++) {
+    html += `<div class="chapter-tab" data-chapter="${i}" onclick="scrollToChapter(${i})">第${i}章</div>`;
+  }
+  chapterTabs.innerHTML = html;
+}
+
+let globalShift = 0;
+
+function updateAllPositions() {
+  // 卡片缩放区间：<100% 仅圆点，100%-150% 平滑过渡，>150% 完整卡片
+  const cardScale = zoomLevel < 1.0 ? 0.01
+    : zoomLevel < 1.5 ? 0.01 + (zoomLevel - 1.0) / 0.5 * 0.99
+    : 1;
+  const cardOpacity = zoomLevel < 1.0 ? 0 : zoomLevel < 1.5 ? (zoomLevel - 1.0) / 0.5 : 1;
+
+  const margin = 300;
+  const rawDx = [];
+
+  positionedEls.forEach(item => {
+    const dx = displayX(item.baseX);
+    rawDx.push(dx);
+  });
+
+  const minRaw = rawDx.length > 0 ? Math.min(...rawDx) : 0;
+  globalShift = margin - minRaw;
+
+  positionedEls.forEach((item, i) => {
+    const finalX = rawDx[i] + globalShift;
+    if (item.type === 'svgline') {
+      item.el.setAttribute('x1', finalX);
+      item.el.setAttribute('x2', finalX);
+    } else if (item.type === 'svgcircle') {
+      item.el.setAttribute('cx', finalX);
+    } else if (item.type === 'tick') {
+      item.el.style.left = finalX + 'px';
+    } else if (item.type === 'node') {
+      item.el.style.left = finalX + 'px';
+      item.el.style.setProperty('--card-scale', cardScale);
+      const cardEl = item.el.querySelector('.node-card');
+      if (cardEl) cardEl.style.opacity = cardOpacity;
+    } else {
+      item.el.style.left = finalX + 'px';
+    }
+  });
+
+  const maxRaw = rawDx.length > 0 ? Math.max(...rawDx) : 0;
+  const trackW = maxRaw + globalShift + margin;
+  trackEl.style.width = trackW + 'px';
+  if (svgEl) svgEl.style.width = trackW + 'px';
+
+  updateTickVisibility();
+}
+
+function getTickInterval() {
+  if (zoomLevel < 0.6) return 20;
+  if (zoomLevel < 1.2) return 10;
+  if (zoomLevel < 2.5) return 5;
+  return 1;
+}
+
+function updateTickVisibility() {
+  const interval = getTickInterval();
+  positionedEls.forEach(item => {
+    if (item.type !== 'tick') return;
+    const year = parseInt(item.el.dataset.tickYear);
+    const show = (year % interval === 0);
+    item.el.style.display = show ? '' : 'none';
+    const isLabel = (interval >= 5 && year % (interval * (interval >= 10 ? 1 : 2)) === 0) || interval <= 1;
+    if (show) {
+      item.el.classList.toggle('major', isLabel);
+      item.el.classList.toggle('minor', !isLabel);
+    }
+  });
+}
+
+function applyZoom(level, keepCenterEvt) {
+  const oldZoom = zoomLevel;
+  zoomLevel = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
+  zoomLevel = Math.round(zoomLevel * 100) / 100;
+  if (zoomLevel === oldZoom) return;
+
+  const vw = viewport.clientWidth;
+  const mouseX = keepCenterEvt
+    ? keepCenterEvt.clientX - viewport.getBoundingClientRect().left
+    : vw / 2;
+  const focalDisplay = viewport.scrollLeft + mouseX;
+
+  // focalDisplay→ 旧坐标系 baseX → 新 zoom 下的 raw display（anchor 不变）
+  const focalBase = (focalDisplay - globalShift - anchorBaseX) / oldZoom + anchorBaseX;
+  const newRawDisplay = (focalBase - anchorBaseX) * zoomLevel + anchorBaseX;
+
+  updateAllPositions();
+  zoomLabel.textContent = Math.round(zoomLevel * 100) + '%';
+
+  // 保持焦点在鼠标位置
+  viewport.scrollLeft = newRawDisplay + globalShift - mouseX;
+}
+
+function adjustZoom(delta) {
+  applyZoom(zoomLevel + delta);
+}
+
+function resetZoom() {
+  applyZoom(1.0);
+}
+
+viewport.addEventListener('wheel', (e) => {
+  if (e.ctrlKey || e.metaKey) return;
+  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  e.preventDefault();
+  const delta = -e.deltaY * ZOOM_SPEED_WHEEL * 0.01;
+  applyZoom(zoomLevel + delta, e);
+}, { passive: false });
+
+function getChapterStartYear(chapter) {
+  for (const e of EVENTS) {
+    if (e.chapter === chapter && e.category !== 'chapter') return e.year;
+  }
+  return YEAR_START;
+}
+
+function scrollToChapter(ch) {
+  const year = getChapterStartYear(ch);
+  const baseX = xPos(year);
+  const pos = displayX(baseX) + globalShift;
+  document.querySelectorAll('.chapter-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`.chapter-tab[data-chapter="${ch}"]`);
+  if (tab) tab.classList.add('active');
+  viewport.scrollTo({ left: pos - 200, behavior: 'smooth' });
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.filter-btn[data-filter="${filter}"]`).classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  const nodes = document.querySelectorAll('.event-node');
+  nodes.forEach(node => {
+    const cat = node.dataset.category;
+    const match = currentFilter === 'all' || cat === currentFilter;
+    if (match) {
+      node.style.display = '';
+      if (!node.classList.contains('visible')) node.classList.add('visible');
+    } else {
+      node.style.display = 'none';
+    }
+  });
+}
+
+function renderTimeline() {
+  positionedEls.length = 0;
+  const nonChapterEvts = EVENTS.filter(e => e.category !== 'chapter');
+
+  // 阶梯布局：按时间排序，14 级周期分布（上 8 级 + 下 6 级）
+  const sorted = [...nonChapterEvts].sort((a, b) => a.year - b.year || a.title.localeCompare(b.title));
+  const LEVELS_ABOVE = 8, LEVELS_BELOW = 6, TOTAL = LEVELS_ABOVE + LEVELS_BELOW;
+  const STEP = 5.3;
+
+  sorted.forEach((e, idx) => {
+    const r = idx % TOTAL;
+    let side, level;
+    if (r < LEVELS_ABOVE * 2 && r % 2 === 0) {
+      side = 'above'; level = Math.floor(r / 2) + 1;
+    } else if (r < LEVELS_ABOVE * 2 && r % 2 === 1) {
+      side = 'below'; level = Math.floor(r / 2) + 1;
+    } else {
+      side = 'above'; level = r - LEVELS_BELOW + 1;
+    }
+    const yPct = side === 'above' ? 50 - level * STEP : 50 + level * STEP;
+    e._side = side;
+    e._yPct = Math.max(2, Math.min(98, yPct));
+    e._baseX = xPos(e.year);
+  });
+
+  baseTrackWidth = xPos(YEAR_END) + 300;
+  anchorBaseX = baseTrackWidth / 2;
+  zoomLevel = 1.0;
+
+  // SVG 连接线
+  let svgLines = '';
+  nonChapterEvts.forEach(e => {
+    const bx = e._baseX;
+    const yPct = e._yPct;
+    const cat = e.category === 'memory' ? 'memory' : 'understand';
+    const color = e.category === 'memory' ? '#c41e3a' : '#1a5276';
+    svgLines += `
+      <circle data-bx="${bx}" data-cy="${yPct}" data-role="endpoint" cx="${bx}" cy="${yPct}%" r="5"
+        fill="${color}" stroke="#fff" stroke-width="2" class="endpoint-${cat}"/>
+      <line data-bx="${bx}" data-ypct="${yPct}" x1="${bx}" y1="${yPct}%" x2="${bx}" y2="50%"
+        stroke="${color}" stroke-width="1.2" stroke-opacity="0.28" vector-effect="non-scaling-stroke"/>
+      <circle data-bx="${bx}" data-role="tl-dot" cx="${bx}" cy="50%" r="3"
+        fill="${color}" fill-opacity="0.5" class="timeline-dot"/>`;
+  });
+
+  // 章节标记
+  let chapterHtml = '';
+  for (let ch = 1; ch <= 10; ch++) {
+    const chEvents = EVENTS.filter(e => e.chapter === ch && e.category !== 'chapter');
+    if (chEvents.length === 0) continue;
+    const startYear = Math.min(...chEvents.map(e => e.year));
+    const chx = xPos(startYear);
+    const side = ch % 2 === 0 ? 'right' : 'left';
+    chapterHtml += `<div class="chapter-marker" data-bx="${chx}" data-chapter="${ch}" style="left:${chx}px">
+      <div class="ch-label ${side}">${CHAPTER_NAMES[ch]}</div>
+      <div class="ch-dot"></div>
+    </div>`;
+  }
+
+  // 年份刻度
+  let ticksHtml = '';
+  for (let y = Math.floor(YEAR_START/5)*5; y <= YEAR_END; y += 5) {
+    const bx = xPos(y);
+    ticksHtml += `<div class="tick-mark major" data-tick-year="${y}" data-bx="${bx}" style="left:${bx}px">
+      <div class="tick-line"></div><div class="tick-label">${y}</div></div>`;
+  }
+  for (let y = YEAR_START; y <= YEAR_END; y++) {
+    if (y % 5 === 0) continue;
+    const bx = xPos(y);
+    ticksHtml += `<div class="tick-mark minor" data-tick-year="${y}" data-bx="${bx}" style="left:${bx}px; display:none;">
+      <div class="tick-line"></div></div>`;
+  }
+
+  // 事件节点
+  let eventsHtml = '';
+  nonChapterEvts.forEach(e => {
+    const catClass = e.category === 'memory' ? 'memory' : 'understand';
+    const badge = e.category === 'memory' ? '识记' : '理解';
+    const tform = e._side === 'above' ? 'translate(-50%,-100%)' : 'translate(-50%,0%)';
+    eventsHtml += `<div class="event-node ${catClass} ${e._side}"
+      data-category="${e.category}" data-id="${e.id}" data-bx="${e._baseX}"
+      style="left:${e._baseX}px; top:${e._yPct}%; --card-scale:1;"
+      onclick="openDetail('${e.id}')">
+      <div class="node-card" style="transform:${tform} scale(var(--card-scale));">${e.title}<span class="badge">${badge}</span><span class="node-year">${e.year}</span></div>
+    </div>`;
+  });
+
+  trackEl.innerHTML = `
+    <svg class="connector-svg" style="width:${baseTrackWidth}px; height:100%;">${svgLines}</svg>
+    <div class="timeline-line"></div>
+    ${chapterHtml}
+    ${ticksHtml}
+    ${eventsHtml}`;
+
+  svgEl = trackEl.querySelector('.connector-svg');
+  trackEl.querySelectorAll('line[data-bx]').forEach(line => {
+    positionedEls.push({ el: line, baseX: parseFloat(line.dataset.bx), type: 'svgline' });
+  });
+  trackEl.querySelectorAll('circle[data-bx]').forEach(c => {
+    positionedEls.push({ el: c, baseX: parseFloat(c.dataset.bx), type: 'svgcircle' });
+  });
+  trackEl.querySelectorAll('.chapter-marker[data-bx]').forEach(el => {
+    positionedEls.push({ el, baseX: parseFloat(el.dataset.bx), type: 'chapter' });
+  });
+  trackEl.querySelectorAll('.tick-mark[data-bx]').forEach(el => {
+    positionedEls.push({ el, baseX: parseFloat(el.dataset.bx), type: 'tick' });
+  });
+  trackEl.querySelectorAll('.event-node[data-bx]').forEach(el => {
+    positionedEls.push({ el, baseX: parseFloat(el.dataset.bx), type: 'node' });
+  });
+
+  updateTickVisibility();
+  zoomLabel.textContent = '100%';
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { root: viewport, threshold: 0.05, rootMargin: '0px 80px 0px 80px' });
+
+  trackEl.querySelectorAll('.event-node').forEach(node => observer.observe(node));
+
+  setTimeout(() => {
+    trackEl.querySelectorAll('.event-node').forEach(node => {
+      const rect = node.getBoundingClientRect();
+      const vw = viewport.getBoundingClientRect();
+      if (rect.left < vw.right && rect.right > vw.left) node.classList.add('visible');
+    });
+  }, 200);
+}
+
+// 详情弹窗
+function openDetail(id) {
+  let event = EVENTS.find(e => e.id === id);
+  if (!event) event = EVENTS.find(e => e.title === id);
+  if (!event) return;
+
+  const catTag = event.category === 'memory'
+    ? '<span class="meta-tag memory-tag">识记性重点</span>'
+    : '<span class="meta-tag understand-tag">理解性重点</span>';
+
+  detailHeader.innerHTML = `
+    <div class="event-title" style="color:${event.category==='memory'?'var(--vermilion)':'var(--indigo)'}">${event.title}</div>
+    <div class="event-meta">
+      ${catTag}
+      <span class="meta-tag chapter-tag">${event.year}年 · ${CHAPTER_NAMES[event.chapter]||'第'+event.chapter+'章'}</span>
+    </div>`;
+
+  let bodyHtml = '';
+
+  if (event.textbook) {
+    bodyHtml += `<div class="detail-section textbook">
+      <h3>教材原文</h3>
+      <div class="textbook-quote">${event.textbook}</div>
+    </div>`;
+  }
+
+  if (event.examRefs && event.examRefs.length > 0) {
+    bodyHtml += `<div class="detail-section exam">
+      <h3>考题回溯（共${event.examRefs.length}题）</h3>`;
+    event.examRefs.forEach(ref => {
+      bodyHtml += `<div class="exam-item">
+        <span class="exam-paper">${ref.paper}</span>
+        <span class="exam-type">${ref.type}</span>
+        <span class="exam-question">${ref.q}</span>
+      </div>`;
+    });
+    bodyHtml += `</div>`;
+  }
+
+  detailBody.innerHTML = bodyHtml;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail(e) {
+  if (e && e.target !== overlay) return;
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// 键盘关闭
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+
+// 滚动时更新章节标签和隐藏提示
+viewport.addEventListener('scroll', () => {
+  const sl = viewport.scrollLeft;
+  hint.style.opacity = sl > 100 ? '0' : '0.7';
+
+  const vw = viewport.clientWidth;
+  const centerRaw = sl + vw / 2 - globalShift;
+  const centerBase = (zoomLevel !== 0) ? (centerRaw - anchorBaseX) / zoomLevel + anchorBaseX : centerRaw;
+
+  let activeChapter = 1;
+  for (let ch=1; ch<=10; ch++) {
+    const sy = getChapterStartYear(ch);
+    if (centerBase + 200 >= xPos(sy)) activeChapter = ch;
+  }
+  document.querySelectorAll('.chapter-tab').forEach(t => {
+    const tabCh = parseInt(t.dataset.chapter);
+    t.classList.toggle('active', tabCh === activeChapter);
+  });
+});
+
+// 拖拽滚动
+let isDown = false, startX, scrollLeftStart;
+viewport.addEventListener('mousedown', (e) => {
+  isDown = true;
+  startX = e.pageX - viewport.offsetLeft;
+  scrollLeftStart = viewport.scrollLeft;
+  viewport.style.cursor = 'grabbing';
+});
+viewport.addEventListener('mouseleave', () => { isDown = false; viewport.style.cursor = 'grab'; });
+viewport.addEventListener('mouseup', () => { isDown = false; viewport.style.cursor = 'grab'; });
+viewport.addEventListener('mousemove', (e) => {
+  if (!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - viewport.offsetLeft;
+  const walk = (x - startX) * 2;
+  viewport.scrollLeft = scrollLeftStart - walk;
+});
+
+// 初始化
+buildChapterTabs();
+renderTimeline();
+
+// 初始滚动到第一个事件
+setTimeout(() => {
+  const firstYear = getChapterStartYear(1);
+  viewport.scrollTo({ left: displayX(xPos(firstYear)) + globalShift - 100 });
+}, 300);
+
+</script>
+</body>
+</html>
