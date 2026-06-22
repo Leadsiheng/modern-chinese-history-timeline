@@ -738,9 +738,9 @@ html, body {
     </div>
 
     <div class="zoom-controls" id="zoomControls">
-      <button class="zoom-btn" onclick="adjustZoom(0.15)" title="放大">+</button>
+      <button class="zoom-btn" onclick="adjustZoom(0.015)" title="放大">+</button>
       <span class="zoom-label" id="zoomLabel">100%</span>
-      <button class="zoom-btn" onclick="adjustZoom(-0.15)" title="缩小">−</button>
+      <button class="zoom-btn" onclick="adjustZoom(-0.015)" title="缩小">−</button>
       <button class="zoom-reset" onclick="resetZoom()">复位</button>
     </div>
   </div>
@@ -1380,7 +1380,7 @@ let zoomLevel = 1.0;
 let anchorBaseX = 0;
 const ZOOM_MIN = 0.50;
 const ZOOM_MAX = 5.0;
-const ZOOM_SPEED_WHEEL = 0.08;
+const ZOOM_SPEED_WHEEL = 0.008;
 let baseTrackWidth = 0;
 
 const positionedEls = [];
